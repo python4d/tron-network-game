@@ -20,8 +20,8 @@ class Player(pygame.sprite.Sprite):
         self.direction=(1,0) if playerId==0 else (-1,0) 
 
         # Load the image
-        self.image = pygame.image.load(u"C:/Users/PC-Baco/Documents/Python/tron/car.png").convert_alpha() if playerId==0 \
-            else pygame.image.load(u"C:/Users/PC-Baco/Documents/Python/tron/car1.png").convert_alpha()
+        self.image = pygame.image.load(u"car.png").convert_alpha() if playerId==0 \
+            else pygame.image.load(u"car1.png").convert_alpha()
         self.image = pygame.transform.scale(self.image,(self.width,self.height))
         self.image_originale=self.image
         self.angle = 180 if playerId==0 else 0
