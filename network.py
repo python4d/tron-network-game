@@ -3,10 +3,10 @@ import pickle
 
 
 class Network:
-    def __init__(self):
+    def __init__(self,server="192.168.0.9",port=5555):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = "192.168.0.9"
-        self.port = 5555
+        self.server = server
+        self.port = port
         self.addr = (self.server, self.port)
         self.p = self.connect() #récupération de l'envoi du joueur serveur.py:25
 

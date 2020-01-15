@@ -15,18 +15,35 @@ GREY =  (128,128,128)
 
 pygame.font.init()
 
-width=700
-height=700
-win=pygame.display.set_mode((width,height))
+WIDTH=800
+HEIGHT=800
+win=pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Client")
 
-def server_error(txt):
-    font = pygame.font.SysFont("comicsans", 30)
-    text = font.render("<!! Vérifie le server %s !!>"%txt, 1, (255,0,0))
-    win.blit(text, (200,300))
+def server_error(n,txt=""):
+    font = pygame.font.SysFont("comicsansms", 20)
+    text = font.render("!Error %s : Vérifie ton serveur adr=%s, port=%s!" % (txt,*(n.addr)), 1, (200,255,200))
+    text_rect = text.get_rect(center=(WIDTH/2, HEIGHT/2))
+    win.blit(text, text_rect)
     pygame.display.flip()
-    pygame.time.delay(5000)
+    pygame.time.delay(8000)
     print("Couldn't get playerId - server problem?")
+
+def dessin_scoring(win,p,score):
+    pygame.draw.lines(win,p.color,True,((p.epaisseur,p.epaisseur),(WIDTH-p.epaisseur,p.epaisseur),(WIDTH-p.epaisseur,HEIGHT-p.epaisseur),(p.epaisseur,HEIGHT-p.epaisseur)),p.epaisseur)
+    pygame.draw.lines(win,p.color,True,((p.epaisseur,p.epaisseur+HEIGHT/10),(WIDTH-p.epaisseur,p.epaisseur+HEIGHT/10)),p.epaisseur)
+    pygame.draw.lines(win,p.color,True,((WIDTH/2-p.epaisseur,p.epaisseur),(WIDTH/2-p.epaisseur,HEIGHT/10+p.epaisseur)),p.epaisseur)
+    
+    font = pygame.font.SysFont("comicsansms", 80)
+    text = font.render(str(score[0]), 1, (250,10,10))
+    text_rect = text.get_rect(center=(WIDTH/4, HEIGHT/17))
+    win.blit(text, text_rect)
+    text = font.render(str(score[1]), 1, (10,10,250))
+    text_rect = text.get_rect(center=(WIDTH*3/4, HEIGHT/17))
+    win.blit(text, text_rect)
+
+    
+
 
 # Ecran du début avant connection
 def startmenu(cr=0,cc=5):
@@ -37,24 +54,26 @@ def startmenu(cr=0,cc=5):
         cr=255;cc=-cc
     elif cr<0 : 
         cr=0;cc=-cc
-    font = pygame.font.SysFont("comicsans", 30)
+    font = pygame.font.SysFont("comicsansms", 30)
     text = font.render("Tape sur la barre d'espace pour rentrer dans TRON !", 1, (cr,cr,cr))
-    win.blit(text, (100,200))    
+    text_rect = text.get_rect(center=(WIDTH/2, HEIGHT/2-100))
+    win.blit(text, text_rect)    
     keys=pygame.key.get_pressed()
     if keys[pygame.K_SPACE]:   
-        # Création de l'objet Network déclenche la connexion et dans lle thread envoie le n° du player  
+        # Création de l'objet Network déclenche la connexion
+        #  et dans le thread/serveur.py envoie le n° du player  
         n = Network()
         try:
             playerId = int(n.getP())
         except:
-            server_error("n.getP()")
+            server_error(n,"n.getP()")
             return startmenu,[]            
-        print("You are player", playerId)
+        print("Tu es le Joueur", playerId)
         players=[Player(0),Player(1)]
         try:
             game = n.send(playerId)
         except:
-            server_error("n.send(playerId)")
+            server_error(n,"n.send(playerId)")
             return startmenu,[]               
         return waitplayer,[n,game,players,playerId]
     return startmenu,[cr,cc]
@@ -76,6 +95,7 @@ def waitplayer(n,game,players,id):
 
 
 def ingame(n,game,players,id):
+    old_score=game.wins
     p=players[id]
     game=n.send(((p.x,p.y), p.angle, p.direction, p.collision))
     #print(game.moves)
@@ -95,20 +115,17 @@ def ingame(n,game,players,id):
             win.blit(players[id].image, players[id].rect)
             for p in players:                
                 pygame.draw.lines(win,p.color,False,p.trace,p.epaisseur)
-            pygame.draw.lines(win,p.color,True,((p.epaisseur,p.epaisseur),(width-p.epaisseur,p.epaisseur),(width-p.epaisseur,height-p.epaisseur),(p.epaisseur,height-p.epaisseur)),p.epaisseur)
-
+            # encadrement noir et dessin scoring
+            dessin_scoring(win,players[id],game.wins)
             players[id].collision=(players[id].get_color_front(win)==(0,0,0))
+            if old_score!=game.wins: return gameover,[n,game,players,id]
             
     return ingame,[n,game,players,id]
 
-def gameover(cr=0,cc=2):
-
-    
-    keys=pygame.key.get_pressed()
-    if keys[pygame.K_SPACE]: 
-        return startmenu,[]
-
-    return gameover,[cr,cc]
+def gameover(n,game,players,id):
+    game = n.send("reset")
+    players=[Player(0),Player(1)]
+    return ingame,[n,game,players,id]
 
 
 clock = pygame.time.Clock()
@@ -119,6 +136,7 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             raise SystemExit
-
+# State Machine => lance la fonction "func" avec les arguments "*args" 
+# et récupére la prochaine "state" défini par une fonction et ses arguments...
     func,args = func(*args)
     pygame.display.flip()

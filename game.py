@@ -13,6 +13,7 @@ class Game:
 
     def set_player_move(self,playerId,trace):
         self.moves[playerId] = trace
+        self.wins[playerId] += 1 if trace[3] else 0
 
     def play(self, playerId, move):
         #self.moves[playerId] = move
@@ -30,3 +31,8 @@ class Game:
     def resetWent(self):
         self.p1Went = False
         self.p2Went = False
+        
+    def resetMove(self):
+        self.moves = [None, None]
+        self.resetWent()
+        

@@ -1,19 +1,20 @@
 import socket
-from _thread import *
+from _thread import start_new_thread
 import pickle
 from game import Game
 
 server = "192.168.0.9"
 port = 5555
-
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
     s.bind((server, port))
 except socket.error as e:
     str(e)
-
-s.listen(2)
+try:
+    s.listen(2)
+except socket.error as e:
+    str(e)    
 print("Waiting for a connection, Server Started")
 
 connected = set()
@@ -23,7 +24,7 @@ idCount = 0
 def threaded_client(conn, p, gameId):
     global idCount
     conn.send(str.encode(str(p))) #Envoi le numéro du joueur
-    print ((p,"# conn.send(str.encode(str(p)))"))
+    #print ((p,"# conn.send(str.encode(str(p)))"))
     while True:
         try:
             #data = conn.recv(4096).decode()
@@ -36,7 +37,7 @@ def threaded_client(conn, p, gameId):
                     break
                 else: 
                     if data == "reset":
-                        game.resetWent()
+                        game.resetMove()
                         print(p,"# game.resetWent()")
                     elif data == 0 or data == 1:
                         game.play(p, data)
