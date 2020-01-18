@@ -5,7 +5,7 @@ jeu de TRON en réseau
 
 server.py à lancer (actuellement 192.168.0.9)
 
-client.py à lancer pour chaque joueur sur n'importe quel ordi en local
+tron.py à lancer pour chaque joueur sur n'importe quel ordi en local
 
 
 -----
