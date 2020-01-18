@@ -3,7 +3,7 @@ import pygame
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, playerId=0, screenW=800, screenH=800,  width=100, height=50, color=(0,0,0), epaisseur=10):
+    def __init__(self, playerId=0, screenW=1200, screenH=800,  width=50, height=25, color=(0,0,0), epaisseur=10):
         """ Graphic Sprite Constructor. """
         # Call the parent class (Sprite) constructor
         super(Player,self).__init__()
@@ -32,7 +32,7 @@ class Player(pygame.sprite.Sprite):
         # Fetch the rectangle object that has the dimensions of the image 'image'.
         # Update the position of this object by setting the values of rect.x and rect.y
         self.rect = self.image.get_rect().move((100,self.screenH/10*2) \
-                            if playerId==0 else (self.screenW-200,self.screenH/10*8))
+                            if playerId==0 else (self.screenW-100-width,self.screenH/10*8))
         self.x=self.rect.centerx
         self.y=self.rect.centery
         self.trace=[(self.x,self.y)]
