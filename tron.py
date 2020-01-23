@@ -4,7 +4,7 @@ import pickle
 import random
 from network import Network
 
-from player import Player
+from player import Player,InputBox
 
 # Define the colors we will use in RGB format
 BLACK = (  0,   0,   0)
@@ -22,7 +22,8 @@ HEIGHT=800
 win=pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("Client")
 
-prix=(("t'es nul...","perdu...","pas doué...","arrête frère !","le boulet...","t'as ton permis?","reste au lit", "regarde l'écran !","cas désespéré..."),("Joli !","Gagné !","Grand Pilote !","Excellent !","Bien Joué !"))
+prix=(("t'es nul...","perdu...","pas doué...","arrête frère !","le boulet...","t'as ton permis?","reste au lit", "regarde l'écran !","cas désespéré..."), \
+    ("Joli !","Gagné !","Grand Pilote !","Excellent !","Bien Joué !","Beau Gosse !"))
 
 def server_error(n,txt=""):
     font = pygame.font.SysFont("comicsansms", 20)
@@ -50,7 +51,8 @@ def dessin_scoring(win,p,score):
 
 
 # Ecran du début avant connection
-def startmenu(cr=0,cc=5):
+def startmenu(events,cr=0,cc=5,input_box=InputBox(WIDTH, HEIGHT, 140, 32, text="192.168.0.9")):
+    input_box.set_events(events)
     win.fill((128,128,128))
     win.set_alpha(cr)
     cr+=cc
@@ -59,28 +61,33 @@ def startmenu(cr=0,cc=5):
     elif cr<0 : 
         cr=0;cc=-cc
     font = pygame.font.SysFont("comicsansms", 30)
-    text = font.render("Tape sur la barre d'espace pour rentrer dans TRON !", 1, (cr,cr,cr))
+    text = font.render("Tape sur la barre d'espace pour rentrer dans TRON !" if input_box.active==False else "Modifie l'adresse du server et valide avec <Return>" , 1, (cr/3,cr,cr/2))
     text_rect = text.get_rect(center=(WIDTH/2, HEIGHT/2-100))
     win.blit(text, text_rect)    
+
+    input_box.handle_event()
+    input_box.update()
+    input_box.draw(win)
+    
     keys=pygame.key.get_pressed()
-    if keys[pygame.K_SPACE]:   
+    if keys[pygame.K_SPACE] and input_box.active==False:   
         # Création de l'objet Network déclenche la connexion
-        #  et dans le thread/serveur.py envoie le n° du player  
-        n = Network()
+        #  et dans le thread/serveur.py envoie le n° du player          
+        n = Network(server=input_box.text)
         try:
-            playerId = int(n.getP())
+             playerId = int(n.getP())
         except:
             server_error(n,"n.getP()")
-            return startmenu,[]            
+            return startmenu,[events]            
         print("Tu es le Joueur", playerId)
         players=[Player(0),Player(1)]
         try:
             game = n.send(playerId)
         except:
             server_error(n,"n.send(playerId)")
-            return startmenu,[]               
+            return startmenu,[events]               
         return waitplayer,[n,game,players,playerId,0]
-    return startmenu,[cr,cc]
+    return startmenu,[events,cr,cc,input_box]
 
 #Ecran en attente d'un autre joueur game complète
 def waitplayer(n,game,players,id,time=0):
@@ -159,14 +166,14 @@ def gameover(n,game,players,id,old_score,time=0,str_prix=("","")):
 
 
 clock = pygame.time.Clock()
-func,args = startmenu,[]
+events=[]
+func,args = startmenu,[events]
 while True:
-
     clock.tick(FRAMES)
-    
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            raise SystemExit
+    if pygame.event.peek(pygame.QUIT,True):
+        raise SystemExit
+    events.clear()
+    events.extend(pygame.event.get())
 # State Machine => lance la fonction "func" avec les arguments "*args" 
 # et récupére la prochaine "state" défini par une fonction et ses arguments...
     func,args = func(*args)

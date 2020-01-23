@@ -1,6 +1,75 @@
 # pylint: disable=no-member
 import pygame
+class InputBox:
+    def __init__(self, x, y, w, h,text=''):
+        self.COLOR_INACTIVE = pygame.Color('lightskyblue3')
+        self.COLOR_ACTIVE = pygame.Color('purple4')
+        self.FONT = pygame.font.Font(None, 32)
+        self.rect = pygame.Rect(x, y/3*2, w, h)
+        self.maxx = x
+        self.maxy = y
+        self.color = self.COLOR_INACTIVE
+        self.text = text
+        self.text_first=text
+        self.txt_surface = self.FONT.render(text, True, self.color)
+        self.active = False
+        self.events=[]
 
+    @staticmethod
+    def validate_ip(s):
+        a = s.split('.')
+        if len(a) != 4:
+            return False
+        for x in a:
+            if not x.isdigit():
+                return False
+            i = int(x)
+            if i < 0 or i > 255:
+                return False
+        return True
+
+    def set_events(self,e):
+        self.events=e
+
+    def handle_event(self):
+        print(self.events)
+        for event in self.events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                # If the user clicked on the input_box rect.
+                if self.rect.collidepoint(event.pos):
+                    # Toggle the active variable.
+                    self.active = not self.active
+                else:
+                    self.active = False
+            if event.type == pygame.KEYDOWN:
+                if self.active:
+                    if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                        print(self.text)
+                        if not InputBox.validate_ip(self.text):
+                            self.text=self.text_first
+                        self.active = False
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.text = self.text[:-1]
+                    else:
+                        if event.unicode in ['0','1','2','3','4','5','6','7','8','9','.']:
+                            self.text += event.unicode
+                        
+
+    def update(self):
+        # Resize the box if the text is too long.
+        width = max(200, self.txt_surface.get_width()+10)
+        self.rect.w = width
+        self.rect.x = (self.maxx-width)/2
+
+    def draw(self, screen):        
+        # Change the current color of the input box.
+        self.color = self.COLOR_ACTIVE if self.active else self.COLOR_INACTIVE
+        # Re-render the text.
+        self.txt_surface = self.FONT.render("Pour modifier l'adresse du server, clique dessus ="+self.text, True, self.color)
+        # Blit the text.
+        screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
+        # Blit the rect.
+        pygame.draw.rect(screen, self.color, self.rect, 2)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, playerId=0, screenW=1200, screenH=800,  width=50, height=25, color=(0,0,0), epaisseur=10):
@@ -69,9 +138,13 @@ class Player(pygame.sprite.Sprite):
         elif keys[pygame.K_DOWN] and self.angle!=-90:
             self.angle=90
             self.direction=(0,1)
-        
-        self.x += int(self.direction[0])*self.vel
-        self.y += int(self.direction[1])*self.vel
+        if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+            speed=2
+        else:
+            speed=1
+
+        self.x += int(self.direction[0])*self.vel*speed
+        self.y += int(self.direction[1])*self.vel*speed
         self.trace.append((self.x,self.y))
 
         self.update_image((self.x,self.y),self.angle)
