@@ -5,7 +5,7 @@ server.py à lancer (utilisera premier IP local trouvé, à vérifier dans la co
 
 tron.py à lancer pour chaque joueur sur n'importe quel ordi en local (possibilité de changer d'IP)
 
-Commandes: flêches pour conduire et <shift> pour booster
+Commandes: flêches pour conduire et <<shift>> pour booster
 
 -----
 network.py #gestion des envois client sur le réseau
